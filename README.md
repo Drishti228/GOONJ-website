@@ -1,3 +1,8 @@
 # GOONJ-website
-https://user-images.githubusercontent.com/84791003/146357879-ee1351a7-5d13-4552-a277-07cca9c4aa7c.mp4
+
+
+https://user-images.githubusercontent.com/84791003/146358174-7ae69ef4-5a85-4b25-ad09-8e79d701f809.mp4
+
+
+
  
