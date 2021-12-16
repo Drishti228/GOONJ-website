@@ -1,5 +1,5 @@
 # GOONJ-website
-## http://goonjodisha.unaux.com/
+
 
 My friend and I used WordPress to create a website.We added features such as recording and sending voice messages, using Google Forms, sending in-built forms through email, and a Whatsapp functionality that connects to GoonjOdisha's official company Whatsapp. There were a few additional features, such as discussion boards and solution ratings, among others.
 
