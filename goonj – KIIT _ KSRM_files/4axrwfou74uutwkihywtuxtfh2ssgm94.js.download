@@ -1,0 +1,374 @@
+//start main function
+(function(){
+
+var _spOptions = {"buildNum": 496, "publicToken": "4axrwfou74uutwkihywtuxtfh2ssgm94", "domain": "https://www.speakpipe.com", "tab": {"mobileEnabled": true, "color": "#2742f2", "text": "goonj your voice now", "mobileTextImage": "https://speakpipe.s3.amazonaws.com/label/j/je/je0tz4loeg1al6jm.png?v=1", "visible": true, "position": "bottom-left", "textImage": "https://speakpipe.s3.amazonaws.com/label/3/3x/3x0hsttht1h1ysv7.png?v=1"}, "visitorToken": "Bl0EXsLQigzDhqAS"};
+
+//----------------------------------------------------------
+
+if(!window._speakpipe_dialog_loaded){
+    window._speakpipe_dialog_loaded = true;
+    mainInit();
+}
+
+window._speakpipe_dialog_loaded = true;
+
+//----------------------------------------------------------
+
+function mainInit(){
+    docReady(function(){
+        loadCss();
+        if(isTabEnabled()){
+            if(isMobileClient()){
+                speakPipeButton('lite-mode');
+            }
+            else{
+                speakPipeButton(_spOptions.tab.position);
+            }
+        }
+        registerCustomLinks();
+    });
+}
+
+function docReady(fn) {
+    // see if DOM is already available
+    if (document.readyState === "complete" || document.readyState === "interactive") {
+        // call on next available tick
+        setTimeout(fn, 1);
+    }
+    else {
+        document.addEventListener("DOMContentLoaded", fn);
+    }
+}
+
+function loadCss(){
+    var cssId = 'speakpipe-widget-css';
+    var cssUrl = _spOptions.domain + '/static/css/speakpipe-widget-v2.css';
+    var buildNum = _spOptions.buildNum;
+    if(buildNum){
+        cssUrl += '?' + buildNum;
+        cssId += '-' + buildNum;
+    }
+    if (!document.getElementById(cssId)){
+        var head  = document.getElementsByTagName('head')[0];
+        var link  = document.createElement('link');
+        link.id   = cssId;
+        link.rel  = 'stylesheet';
+        link.type = 'text/css';
+        link.href = cssUrl;
+        link.media = 'all';
+        head.appendChild(link);
+    }
+}
+
+function isTabEnabled(){
+    var tab = _spOptions.tab;
+    return tab && tab.visible && (!isMobileClient() || tab.mobileEnabled);
+}
+
+function isMobileClient(){
+    //http://www.hand-interactive.com/resources/detect-mobile-javascript.htm
+    var _iPhone = "iphone";
+    var _iPod = "ipod";
+    var _iPad = "ipad";
+    var _android = "android";
+
+    //Initialize our user agent string to lower case.
+    var uagent = navigator.userAgent.toLowerCase();
+
+    function _detect(deviceName){
+        if (uagent.search(deviceName) > -1)
+           return true;
+        else
+           return false;
+    }
+
+    return _detect(_iPhone) || _detect(_iPod) || _detect(_iPad) || _detect(_android);
+}
+
+function getDocumentHeight(){
+    var viewportheight;
+
+    // the more standards compliant browsers (mozilla/netscape/opera/IE7) use window.innerWidth and window.innerHeight
+    if (typeof window.innerWidth != 'undefined')
+    {
+        viewportheight = window.innerHeight;
+    }
+
+    // IE6 in standards compliant mode (i.e. with a valid doctype as the first line in the document)
+    else if (typeof document.documentElement != 'undefined'
+        && typeof document.documentElement.clientWidth !=
+        'undefined' && document.documentElement.clientWidth != 0)
+    {
+        viewportheight = document.documentElement.clientHeight;
+    }
+    // older versions of IE
+    else
+    {
+        viewportheight = document.getElementsByTagName('body')[0].clientHeight;
+    }
+    return viewportheight;
+}
+
+function setButtonTop(btn, position){
+    if(position === 'middle-right' || position === 'middle-left'){
+        var docHeight = getDocumentHeight();
+        var topPx = null;
+        if(position === 'middle-right'){
+            //such calc because we rotate the button counterclockwise using the "bottom right" origin
+            topPx = ((docHeight - btn.offsetWidth) / 2) - btn.offsetHeight;
+        }
+        else if(position === 'middle-left'){
+            //such calc because we rotate the button counterclockwise using the "top left" origin
+            topPx = (docHeight + btn.offsetWidth) / 2;
+        }
+        if(topPx){
+            var btTop = ((topPx / docHeight) * 100) - 2; //convert pixels to percents and shift the position 2% up
+            btTop = (btTop < 0) ? 0 : btTop;
+            btn.style.setProperty('top', btTop + '%', "important");
+        }
+    }
+}
+
+function speakPipeButton(position){
+    var a  = document.createElement('a');
+    a.setAttribute('id', '-speakpipe-widget-side-button');
+    a.setAttribute('class', 'speakpipe-button speakpipe-btn-' + position);
+    a.setAttribute('href', '#');
+    a.style.visibility = 'hidden';
+    a.style.setProperty('background-color', _spOptions.tab.color, 'important');
+    if(position == 'lite-mode'){
+        a.style.setProperty('top', 'auto', 'important');
+    }
+    a.onclick = speakPipeClick;
+    var micImg = new Image();
+    micImg.src = getMicImgData();
+    a.appendChild(micImg);
+    var btnText = _spOptions.tab.text;
+    var textNode = document.createTextNode(' ' + btnText);
+    a.appendChild(textNode);
+    document.body.appendChild(a);
+    setTimeout(function(){
+        setButtonTop(a, position);
+        a.style.setProperty('visibility', 'visible', 'important');
+
+    }, 200);
+}
+
+function getWindowSize(){
+    var w = 0;
+    var h = 0;
+    //IE
+    if(!window.innerWidth){
+        if(!(document.documentElement.clientWidth == 0)){
+            //strict mode
+            w = document.documentElement.clientWidth;
+            h = document.documentElement.clientHeight;
+        } else{
+            //quirks mode
+            w = document.body.clientWidth;
+            h = document.body.clientHeight;
+        }
+    } else {
+        //w3c
+        w = window.innerWidth;
+        h = window.innerHeight;
+    }
+    return { width:w, height:h };
+}
+
+function getScrollOffset(){
+    var doc = document.documentElement, body = document.body;
+    var left = (doc && doc.scrollLeft || body && body.scrollLeft || 0);
+    var top = (doc && doc.scrollTop || body && body.scrollTop || 0);
+    return { left: left, top: top };
+}
+
+function setDialogPosition(dlg){
+    var s = dlg.style;
+    var wndSize = getWindowSize();
+    var left = Math.round((wndSize.width - dlg.offsetWidth) / 2);
+    var top = Math.round((wndSize.height - dlg.offsetHeight) / 2);
+    if(isMobileClient()){
+        var scrollOffset = getScrollOffset();
+        s.setProperty('position', 'absolute', 'important');
+        left = scrollOffset.left + left;
+        top = scrollOffset.top + top;
+        if(top < 0){
+            top = 0;
+        }
+    }
+    else{
+        s.setProperty('position', 'fixed', 'important');
+    }
+    s.setProperty('left', left + 'px', 'important');
+    s.setProperty('top', top + 'px', 'important');
+}
+
+function getDialogSize(){
+    var dlgWidth = 340;
+    if(isMobileClient()){
+        var clientWidth = document.documentElement.clientWidth;
+        if(clientWidth){
+            var adjustedWidth = clientWidth - 20;
+            dlgWidth = Math.min(dlgWidth, adjustedWidth);
+        }
+    }
+    return { width: dlgWidth, height: 450 };
+}
+
+
+function openUrlInDialog(frameUrl){
+    var overlayId = '-speakpipe-modal-overlay';
+    var dlgId = '-speakpipe-dialog-container';
+    var frameId = '_speakpipe_labs_recorder_frame';
+    var indId = '-speakpipe-frame-load-indicator';
+
+    var dlg = document.getElementById(dlgId);
+    var frame = document.getElementById(frameId);
+    var modalOverlay = document.getElementById(overlayId);
+    var ind = document.getElementById(indId);
+
+    var dlgSize = getDialogSize();
+    if(dlg){
+        frame.style.visibility = 'hidden';
+        modalOverlay.style.display = 'block';
+        ind.style.display = 'block';
+        dlg.style.display = 'block';
+        setDialogPosition(dlg);
+        frame.src = frameUrl;
+        return;
+    }
+
+    if(!modalOverlay){
+        modalOverlay = document.createElement('div');
+        modalOverlay.setAttribute('id', overlayId);
+        modalOverlay.setAttribute('class', 'speakpipe-modal-overlay');
+        document.body.appendChild(modalOverlay);
+    }
+    modalOverlay.style.display = 'block';
+
+    if(!dlg){
+        dlg = document.createElement('div');
+        dlg.setAttribute('id', dlgId);
+        dlg.setAttribute('class', 'speakpipe-dialog-container');
+        var s = dlg.style;
+        s.setProperty('width', dlgSize.width + 'px', 'important');
+        s.setProperty('height', dlgSize.height + 'px', 'important');
+        document.body.appendChild(dlg);
+        //give a browser some time to set the correct dlg size
+        setTimeout(function(){
+            setDialogPosition(dlg);
+            dlg.style.visibility = 'visible';
+        }, 10);
+        var cls = document.createElement('a');
+        cls.setAttribute('class', 'speakpipe-dialog-close-button');
+        cls.setAttribute('href', '#');
+        cls.onclick = function(){
+            dlg.style.display = 'none';
+            document.getElementById(overlayId).style.display = 'none';
+            return false;
+        }
+        dlg.appendChild(cls);
+        if(!ind){
+            //http://ajaxload.info/
+            ind = document.createElement('img');
+            ind.src = getframeLoaderImgData();
+            ind.setAttribute('id', indId);
+            ind.setAttribute('class', 'speakpipe-frame-load-indicator');
+            var imgSize = 50;
+            var indLeft = (dlgSize.width - imgSize) / 2 + 'px';
+            var indRight = (dlgSize.height - imgSize) / 2 + 'px';
+            ind.style.setProperty('left', indLeft, 'important');
+            ind.style.setProperty('top', indRight, 'important');
+            dlg.appendChild(ind);
+        }
+    }
+    if(!frame){
+        frame = document.createElement('iframe');
+        frame.style.setProperty('width', dlgSize.width + 'px', 'important');
+        frame.style.setProperty('height', dlgSize.height + 'px', 'important');
+        frame.setAttribute('allow', 'microphone');
+        frame.setAttribute('id', frameId);
+        frame.setAttribute('class', 'speakpipe-dialog-widget-frame');
+        frame.setAttribute('frameBorder', 0);
+        frame.style.visibility = 'hidden';
+        frame.setAttribute('src', frameUrl);
+
+        function _showFrame(){
+            ind.style.display = 'none';
+            frame.style.visibility = 'visible';
+        }
+
+        if (frame.attachEvent){
+            frame.attachEvent("onload", _showFrame);
+        } else {
+            frame.onload = _showFrame;
+        }
+
+        dlg.appendChild(frame);
+    }
+}
+
+function openDialog(sitePublicToken, parentAudioKey, parentAudioId, userId, toEmailMode, toEmail){
+    var frameUrl = _spOptions.domain + '/apps/dialog/' + sitePublicToken;
+    if(parentAudioId && parentAudioKey){
+        frameUrl += '/' + parentAudioKey + '/' + parentAudioId;
+        if (userId && userId != -1) {
+            frameUrl += '/' + userId;
+        }
+    }
+    else if(toEmailMode){
+        frameUrl += '/to_email';
+        if(toEmail){
+            frameUrl += '/' + encodeURIComponent(toEmail);
+        }
+    }
+    frameUrl += '?vt=' + _spOptions.visitorToken + '&rf=' + encodeURIComponent(window.location.href);
+    openUrlInDialog(frameUrl);
+}
+
+function speakPipeClick(){
+    openDialog(_spOptions.publicToken);
+    return false;
+}
+
+function openReplyDialog(sitePublicToken, parentAudioId, userMsgToken){
+    var frameUrl = _spOptions.domain + '/widget/reply-dialog/' + sitePublicToken;
+    frameUrl += '/' + parentAudioId;
+    if(userMsgToken){
+        frameUrl += '/' + userMsgToken;
+    }
+    frameUrl += '?vt=' + _spOptions.visitorToken + '&rf=' + encodeURIComponent(window.location.href);
+    openUrlInDialog(frameUrl);
+}
+
+
+function registerCustomLinks(){
+    if(!window._speakpipe_open_widget){
+        window._speakpipe_open_widget = speakPipeClick;
+    }
+
+    if(!window._speakpipe_open_reply_dialog){
+        window._speakpipe_open_reply_dialog = openDialog;
+    }
+
+    if(!window._speakpipe_open_reply_dialog_by_token){
+        window._speakpipe_open_reply_dialog_by_token = openReplyDialog;
+    }
+
+    if (!window._speakpipe_open_url_in_dialog) {
+        window._speakpipe_open_url_in_dialog = openUrlInDialog;
+    }
+}
+
+function getframeLoaderImgData(){
+    return 'data:image/gif;base64,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';
+}
+
+function getMicImgData(){
+    return 'data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBzdGFuZGFsb25lPSJubyI/PjwhLS0gR2VuZXJhdG9yOiBHcmF2aXQuaW8gLS0+PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiBzdHlsZT0iaXNvbGF0aW9uOmlzb2xhdGUiIHZpZXdCb3g9IjAgMCAxMi43NiAyMiIgd2lkdGg9IjEyLjc2IiBoZWlnaHQ9IjIyIj48ZGVmcz48Y2xpcFBhdGggaWQ9Il9jbGlwUGF0aF9oSnoySDFrc1h2OVBOVURURTJVMGZCUWN6cnNKbkt4RyI+PHJlY3Qgd2lkdGg9IjEyLjc2IiBoZWlnaHQ9IjIyIi8+PC9jbGlwUGF0aD48L2RlZnM+PGcgY2xpcC1wYXRoPSJ1cmwoI19jbGlwUGF0aF9oSnoySDFrc1h2OVBOVURURTJVMGZCUWN6cnNKbkt4RykiPjxjbGlwUGF0aCBpZD0iX2NsaXBQYXRoX1Y1Q1pTZzlsS3EyZk1MVWd5Q25vdmN3V0FjY2Z0bDl1Ij48cmVjdCB4PSIwIiB5PSIwLjMzNSIgd2lkdGg9IjEyLjc2IiBoZWlnaHQ9IjIxLjMzIiB0cmFuc2Zvcm09Im1hdHJpeCgxLDAsMCwxLDAsMCkiIGZpbGw9InJnYigyNTUsMjU1LDI1NSkiLz48L2NsaXBQYXRoPjxnIGNsaXAtcGF0aD0idXJsKCNfY2xpcFBhdGhfVjVDWlNnOWxLcTJmTUxVZ3lDbm92Y3dXQWNjZnRsOXUpIj48ZyBpZD0iR3JvdXAiPjxjbGlwUGF0aCBpZD0iX2NsaXBQYXRoX2RLVm9lN2E1WXZaeGdYbkNMd3F1dFcwOEY1Q0xRbHdaIj48cmVjdCB4PSIwIiB5PSIwLjMzNSIgd2lkdGg9IjEyLjc2IiBoZWlnaHQ9IjIxLjMzIiB0cmFuc2Zvcm09Im1hdHJpeCgxLDAsMCwxLDAsMCkiIGZpbGw9InJnYigyNTUsMjU1LDI1NSkiLz48L2NsaXBQYXRoPjxnIGNsaXAtcGF0aD0idXJsKCNfY2xpcFBhdGhfZEtWb2U3YTVZdlp4Z1huQ0x3cXV0VzA4RjVDTFFsd1opIj48ZyBpZD0iR3JvdXAiPjxnIGlkPSJHcm91cCI+PHBhdGggZD0iIE0gMy4wMzIgOS43ODcgTCAzLjAzMiAzLjY4MyBDIDMuMDMyIDEuODM1IDQuNTMyIDAuMzM1IDYuMzggMC4zMzUgTCA2LjM4IDAuMzM1IEMgOC4yMjcgMC4zMzUgOS43MjcgMS44MzUgOS43MjcgMy42ODMgTCA5LjcyNyA5Ljc4NyBDIDkuNzI3IDExLjYzNCA4LjIyNyAxMy4xMzQgNi4zOCAxMy4xMzQgTCA2LjM4IDEzLjEzNCBDIDQuNTMyIDEzLjEzNCAzLjAzMiAxMS42MzQgMy4wMzIgOS43ODcgWiAiIGZpbGw9InJnYigyNTUsMjU1LDI1NSkiLz48cGF0aCBkPSIgTSA2LjM4IDE2Ljc3OCBDIDIuODU4IDE2Ljc3NCAwLjAwNCAxMy45MiAwIDEwLjM5OCBDIDAgMTAuMDc0IDAuMTczIDkuNzc0IDAuNDU0IDkuNjEyIEMgMC43MzUgOS40NSAxLjA4MSA5LjQ1IDEuMzYyIDkuNjEyIEMgMS42NDIgOS43NzQgMS44MTUgMTAuMDc0IDEuODE1IDEwLjM5OCBDIDEuODE1IDEyLjkxOSAzLjg1OSAxNC45NjMgNi4zOCAxNC45NjMgQyA4LjkwMSAxNC45NjMgMTAuOTQ1IDEyLjkxOSAxMC45NDUgMTAuMzk4IEMgMTAuOTQ1IDkuODk3IDExLjM1MSA5LjQ5IDExLjg1MiA5LjQ5IEMgMTIuMzUzIDkuNDkgMTIuNzYgOS44OTcgMTIuNzYgMTAuMzk4IEMgMTIuNzU2IDEzLjkyIDkuOTAyIDE2Ljc3NCA2LjM4IDE2Ljc3OCBMIDYuMzggMTYuNzc4IFogIiBmaWxsPSJyZ2IoMjU1LDI1NSwyNTUpIi8+PHBhdGggZD0iIE0gNi4zOCAyMS42NjEgQyA1Ljg3OSAyMS42NjEgNS40NzIgMjEuMjU0IDUuNDcyIDIwLjc1MyBMIDUuNDcyIDE1Ljg3IEMgNS40NzIgMTUuMzY5IDUuODc5IDE0Ljk2MyA2LjM4IDE0Ljk2MyBDIDYuODgxIDE0Ljk2MyA3LjI4OCAxNS4zNjkgNy4yODggMTUuODcgTCA3LjI4OCAyMC43NTMgQyA3LjI4OCAyMS4yNTQgNi44ODEgMjEuNjYxIDYuMzggMjEuNjYxIEwgNi4zOCAyMS42NjEgWiAiIGZpbGw9InJnYigyNTUsMjU1LDI1NSkiLz48cGF0aCBkPSIgTSAxMC4xNTcgMjEuNjYxIEwgMi42MDMgMjEuNjYxIEMgMi4xMDIgMjEuNjYxIDEuNjk1IDIxLjI1NCAxLjY5NSAyMC43NTMgQyAxLjY5NSAyMC4yNTIgMi4xMDIgMTkuODQ1IDIuNjAzIDE5Ljg0NSBMIDEwLjE1NiAxOS44NDUgQyAxMC42NTggMTkuODQ1IDExLjA2NCAyMC4yNTIgMTEuMDY0IDIwLjc1MyBDIDExLjA2NCAyMS4yNTQgMTAuNjU4IDIxLjY2MSAxMC4xNTYgMjEuNjYxIEwgMTAuMTU3IDIxLjY2MSBaICIgZmlsbD0icmdiKDI1NSwyNTUsMjU1KSIvPjwvZz48L2c+PC9nPjwvZz48L2c+PC9nPjwvc3ZnPg==';
+}
+
+//end main function
+
+})();
